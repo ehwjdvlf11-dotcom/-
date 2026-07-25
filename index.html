@@ -13,11 +13,6 @@
     h2 { text-align: center; color: #60a5fa; margin-bottom: 8px; font-size: 22px; }
     p.desc { text-align: center; color: #9ca3af; font-size: 13px; margin-bottom: 20px; }
     
-    /* 탭 스타일 */
-    .tab-container { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; padding: 12px; background-color: #374151; color: #9ca3af; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .tab-btn.active { background-color: #2563eb; color: white; }
-
     .notice-banner { background: #374151; border: 1px solid #4b5563; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
     .notice-header { background: #1f2937; padding: 12px 16px; color: #fbbf24; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .notice-content { padding: 14px; font-size: 12px; color: #d1d5db; line-height: 1.6; display: none; border-top: 1px solid #4b5563; }
@@ -54,13 +49,7 @@
 
   <div class="card">
     <h2>🔍 구매 계정 조회</h2>
-    <p class="desc" id="descText">일반 계정 발급 코드를 입력하세요.</p>
-    
-    <!-- 탭 선택 버튼 -->
-    <div class="tab-container">
-      <button class="tab-btn active" id="tabNormal" onclick="switchTab('normal')">일반 계정 조회</button>
-      <button class="tab-btn" id="tabEmail" onclick="switchTab('email')">이메일 구매 계정 조회</button>
-    </div>
+    <p class="desc">발급 코드를 입력하여 계정 정보를 확인하세요.</p>
 
     <div class="notice-banner">
       <div class="notice-header" onclick="toggleNotice()">
@@ -78,7 +67,7 @@
     </div>
 
     <div class="input-group">
-      <label id="inputLabel">일반 계정 발급 코드 입력</label>
+      <label>발급 코드 입력</label>
       <input type="text" id="searchInput" placeholder="발급 코드를 입력하세요">
     </div>
     <button class="search-btn" onclick="fetchOrderData()">조회하기</button>
@@ -111,15 +100,6 @@
         </div>
       </div>
 
-      <!-- 이메일 구매 계정 전용 정보 칸 -->
-      <div class="result-item" id="emailInfoContainer" style="display: none;">
-        <span class="label">포함된 이메일 정보</span>
-        <div class="value-row">
-          <span class="value" id="resEmailInfo">-</span>
-          <button class="copy-btn" onclick="copyText('resEmailInfo', this)">복사</button>
-        </div>
-      </div>
-
       <div class="result-item" id="otpContainer" style="display: none;">
         <span class="label">실시간 2차 인증 (OTP) 번호</span>
         <div class="value-row">
@@ -134,32 +114,6 @@
   </div>
 
   <script>
-    let currentMode = 'normal'; // 기본값 일반 모드
-
-    function switchTab(mode) {
-      currentMode = mode;
-      const tabNormal = document.getElementById('tabNormal');
-      const tabEmail = document.getElementById('tabEmail');
-      const inputLabel = document.getElementById('inputLabel');
-      const descText = document.getElementById('descText');
-      
-      document.getElementById('resultBox').style.display = 'none';
-      document.getElementById('errorMsg').style.display = 'none';
-      document.getElementById('searchInput').value = '';
-
-      if (mode === 'normal') {
-        tabNormal.classList.add('active');
-        tabEmail.classList.remove('active');
-        inputLabel.textContent = "일반 계정 발급 코드 입력";
-        descText.textContent = "일반 계정 발급 코드를 입력하세요.";
-      } else {
-        tabEmail.classList.add('active');
-        tabNormal.classList.remove('active');
-        inputLabel.textContent = "이메일 구매 계정 발급 코드 입력";
-        descText.textContent = "이메일 포함 계정 발급 코드를 입력하세요.";
-      }
-    }
-
     function toggleNotice() {
       const content = document.getElementById('noticeContent');
       const arrow = document.getElementById('toggleArrow');
@@ -186,36 +140,21 @@
       resultBox.style.display = 'none';
       errorMsg.style.display = 'none';
 
-      // 탭 모드에 따라 데이터베이스 검색 조건 적용
-      let query = _supabaseClient
+      // Supabase에서 코드 검색
+      const { data, error } = await _supabaseClient
         .from('orders')
         .select('*')
-        .eq('search_key', searchKey);
-
-      if (currentMode === 'normal') {
-        query = query.is('email_type', null);
-      } else {
-        query = query.not('email_type', 'is', null);
-      }
-
-      const { data, error } = await query.maybeSingle();
+        .eq('search_key', searchKey)
+        .maybeSingle();
 
       if (error || !data) {
         errorMsg.style.display = 'block';
         return;
       }
 
-      document.getElementById('resProductType').textContent = data.product_type || '구매 계정';
+      document.getElementById('resProductType').textContent = data.product_type || '일반 계정';
       document.getElementById('resAccountId').textContent = data.account_id || '-';
       document.getElementById('resAccountPw').textContent = data.account_pw || '-';
-
-      const emailInfoContainer = document.getElementById('emailInfoContainer');
-      if (currentMode === 'email' && data.email_type) {
-        document.getElementById('resEmailInfo').textContent = data.email_type;
-        emailInfoContainer.style.display = 'flex';
-      } else {
-        emailInfoContainer.style.display = 'none';
-      }
 
       const otpContainer = document.getElementById('otpContainer');
       if (data.otp_url) {
