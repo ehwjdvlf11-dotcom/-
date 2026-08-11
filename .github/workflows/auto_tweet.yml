@@ -1,9 +1,9 @@
-name: Auto Post to X (Interval & Random)
+name: Auto Post to X (15min Interval & Random)
 
 on:
   schedule:
-    # 30분마다 자동 실행 (cron 표현식)
-    - cron: '*/30 * * * *'
+    # 15분마다 자동 실행 (cron 표현식 수정)
+    - cron: '*/15 * * * *'
   workflow_dispatch: # 수동 실행 버튼
 
 jobs:
@@ -48,13 +48,10 @@ jobs:
               access_token_secret=access_token_secret
           )
 
-          # 기본 문구 설정 (원하시는 문구로 수정 가능합니다)
           base_text = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의\n트위터 #서치벤  계정 ㅅㅊㅂㅌㅅㅌ 양도 스타레일 계정판매 ㅌㅅㅌ 거래 아이디 구매 ㅅㅊㅂ 코리아 원신 서치밴테스트 서치벤테스트 솜인형 판매 테스트 #서치밴"
-
-          # 중복 방지를 위해 무작위 영어 알파벳 3글자 생성 (예: abc, zXy 등)
+          
+          # 중복 방지를 위해 무작위 알파벳 3글자 생성
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
-
-          # 최종 트윗 내용 조합
           tweet_text = f"{base_text} [{random_suffix}]"
 
           response = client.create_tweet(text=tweet_text)
