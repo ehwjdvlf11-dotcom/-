@@ -25,19 +25,19 @@ jobs:
 
       - name: Run script
         env:
-          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
-          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
+          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
         run: |
           python - << 'EOF'
           import os
           import tweepy
 
-          api_key = os.environ['TWITTER_API_KEY']
-          api_secret = os.environ['TWITTER_API_SECRET']
+          api_key = os.environ['TWITTER_CONSUMER_KEY']
+          api_secret = os.environ['TWITTER_CONSUMER_SECRET']
           access_token = os.environ['TWITTER_ACCESS_TOKEN']
-          access_token_secret = os.environ['TWITTER_ACCESS_SECRET']
+          access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
 
           client = tweepy.Client(
               consumer_key=api_key,
@@ -46,6 +46,6 @@ jobs:
               access_token_secret=access_token_secret
           )
 
-          response = client.create_tweet(text="GitHub Actions를 이용한 자동 트윗 테스트입니다! 🚀")
-          print("트윗 전송 성공! ID:", response.data['id'])
+          response = client.create_tweet(text="GitHub Actions로 이뤄진 자동 트윗 테스트입니다! 🚀")
+          print(f"트윗 전송 성공! ID: {response.data['id']}")
           EOF
