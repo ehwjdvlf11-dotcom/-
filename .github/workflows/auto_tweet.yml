@@ -2,8 +2,6 @@ name: Auto Post to X (Fixed Header/Footer & 10min Random)
 
 on:
   schedule:
-    # 한국 시간(KST) 오전 07:00 ~ 새벽 01:00 동안 10분마다 실행
-    # (UTC 기준 22:00 ~ 16:00)
     - cron: '*/10 0-16,22-23 * * *'
   repository_dispatch:
     types: [run-x-bot]
@@ -44,12 +42,49 @@ jobs:
           access_token = os.environ['TWITTER_ACCESS_TOKEN']
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
 
+          # 1. 트윗 작성용 Client (v2)
           client = tweepy.Client(
               consumer_key=api_key,
               consumer_secret=api_secret,
               access_token=access_token,
               access_token_secret=access_token_secret
           )
+
+          # 2. 미디어 업로드용 API (v1.1)
+          auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_token_secret)
+          api_v1 = tweepy.API(auth)
+
+          # -------------------------------------------------------------
+          # [사진 랜덤 선택 설정]
+          # 깃허브에 업로드하신 사진 파일명 목록입니다.
+          image_files = [
+              '카카오톡_20260811_150434564.jpg',
+              '카카오톡_20260811_150434564_01.jpg',
+              '카카오톡_20260811_150434564_02.jpg',
+              '카카오톡_20260811_150434564_03.jpg',
+              'photo_2026 06 25_16 51 41.jpg',
+              'photo_2026-07-29_10-02-25.jpg',
+              'photo_2026-07-29_10-02-27.jpg',
+              'photo_2026 07 29_10 02 28.jpg',
+              'photo_2026_07-29_10-02-29.jpg',
+              'photo_2026-07-29_10-02-31.jpg',
+              'photo_2026 07 29_10 02 32.jpg',
+              'photo_2026-07-29_10-02-33.jpg'
+          ]
+
+          # 존재 유무 확인 후 랜덤 1개 추출
+          valid_images = [img for img in image_files if os.path.exists(img)]
+          media_ids = []
+
+          if valid_images:
+              selected_image = random.choice(valid_images)
+              print(f"선택된 사진: {selected_image}")
+              media = api_v1.media_upload(filename=selected_image)
+              media_ids.append(media.media_id)
+              print("이미지 업로드 성공!")
+          else:
+              print("업로드 가능한 사진을 찾지 못해 텍스트만 전송합니다.")
+          # -------------------------------------------------------------
 
           header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
 
@@ -65,9 +100,15 @@ jobs:
           middle_text = "\n".join(middle_phrases)
           full_text = f"{header}\n{middle_text}"
 
+          # 대괄호 [] 없이 랜덤 영문 3자리만 띄어쓰기 후 추가
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
-          tweet_text = f"{full_text} [{random_suffix}]"
+          tweet_text = f"{full_text} {random_suffix}"
 
-          response = client.create_tweet(text=tweet_text)
+          # 사진 첨부 유무에 맞춰 트윗 전송
+          if media_ids:
+              response = client.create_tweet(text=tweet_text, media_ids=media_ids)
+          else:
+              response = client.create_tweet(text=tweet_text)
+
           print(f"트윗 전송 성공! 내용:\n{tweet_text}\nID: {response.data['id']}")
           EOF
