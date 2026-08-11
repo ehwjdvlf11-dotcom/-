@@ -47,10 +47,8 @@ jobs:
               access_token_secret=access_token_secret
           )
 
-          # 맨 위에 고정될 문구
           header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
 
-          # 무작위로 섞일 중간 내용 조각들
           middle_phrases = [
               "트위터 #서치벤 계정 ㅅㅊㅂㅌㅅㅌ 양도",
               "스타레일 계정판매 ㅌㅅㅌ 거래 아이디 구매",
@@ -58,17 +56,14 @@ jobs:
               "솜인형 판매 테스트 #서치밴"
           ]
 
-          # 중간 조각들 순서 섞기
           random.shuffle(middle_phrases)
 
-          # 고정 문구와 섞인 중간 조각들을 합치기
           middle_text = "\n".join(middle_phrases)
           full_text = f"{header}\n{middle_text}"
 
-          # 맨 뒤에 중복 방지 랜덤 알파벳 추가
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} [{random_suffix}]"
 
           response = client.create_tweet(text=tweet_text)
           print(f"트윗 전송 성공! 내용:\n{tweet_text}\nID: {response.data['id']}")
-          EOF 
+          EOF
