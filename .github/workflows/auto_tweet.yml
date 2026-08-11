@@ -1,4 +1,4 @@
-name: Auto Post to X (Fixed Header/Footer & 15min Random)
+name: Auto Post to X with Random Image & Shuffle (No Bracket)
 
 on:
   schedule:
@@ -32,7 +32,6 @@ jobs:
           python - << 'EOF'
           import os
           import random
-          import string
           import tweepy
 
           api_key = os.environ['TWITTER_CONSUMER_KEY']
@@ -40,13 +39,36 @@ jobs:
           access_token = os.environ['TWITTER_ACCESS_TOKEN']
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
 
-          client = tweepy.Client(
+          # 1. 미디어 업로드를 위한 v1.1 인증
+          auth = tweepy.OAuth1UserHandler(
+              api_key, api_secret, access_token, access_token_secret
+          )
+          api_v1 = tweepy.API(auth)
+
+          # 2. 트윗 작성을 위한 v2 인증
+          client_v2 = tweepy.Client(
               consumer_key=api_key,
               consumer_secret=api_secret,
               access_token=access_token,
               access_token_secret=access_token_secret
           )
 
+          # 3. 저장소 메인에 있는 이미지 파일들 중 랜덤 선택
+          current_folder = "."
+          image_files = [f for f in os.listdir(current_folder) if f.lower().endswith(('png', 'jpg', 'jpeg'))]
+          
+          if not image_files:
+              raise Exception("저장소에 업로드된 이미지 파일이 없습니다.")
+              
+          chosen_image = random.choice(image_files)
+          image_path = os.path.join(current_folder, chosen_image)
+
+          # 4. 이미지 업로드 및 media_id 획득
+          media = api_v1.media_upload(filename=image_path)
+          media_id = media.media_id_string
+          print(f"이미지 업로드 성공: {chosen_image}")
+
+          # 5. 텍스트 조합 (고정 문구 + 중간 내용 셔플 / 괄호 제거됨)
           header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
 
           middle_phrases = [
@@ -59,11 +81,13 @@ jobs:
           random.shuffle(middle_phrases)
 
           middle_text = "\n".join(middle_phrases)
-          full_text = f"{header}\n{middle_text}"
+          tweet_text = f"{header}\n{middle_text}"
 
-          random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
-          tweet_text = f"{full_text} [{random_suffix}]"
-
-          response = client.create_tweet(text=tweet_text)
+          # 6. 최종 트윗 전송 (사진 + 텍스트)
+          response = client_v2.create_tweet(
+              text=tweet_text,
+              media_ids=[media_id]
+          )
+          
           print(f"트윗 전송 성공! 내용:\n{tweet_text}\nID: {response.data['id']}")
           EOF
