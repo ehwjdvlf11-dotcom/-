@@ -1,4 +1,4 @@
-name: Auto Post to X with Random Image & Shuffle (No Bracket)
+name: Auto Post to X with Random Image & Shuffle
 
 on:
   schedule:
@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: Actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -32,6 +32,7 @@ jobs:
           python - << 'EOF'
           import os
           import random
+          import string
           import tweepy
 
           api_key = os.environ['TWITTER_CONSUMER_KEY']
@@ -68,7 +69,7 @@ jobs:
           media_id = media.media_id_string
           print(f"이미지 업로드 성공: {chosen_image}")
 
-          # 5. 텍스트 조합 (고정 문구 + 중간 내용 셔플 / 괄호 제거됨)
+          # 5. 텍스트 조합 (고정 문구 + 중간 내용 셔플 + 괄호 없는 랜덤 알파벳)
           header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
 
           middle_phrases = [
@@ -81,7 +82,11 @@ jobs:
           random.shuffle(middle_phrases)
 
           middle_text = "\n".join(middle_phrases)
-          tweet_text = f"{header}\n{middle_text}"
+          full_text = f"{header}\n{middle_text}"
+
+          # 괄호 없이 영어 알파벳만 띄어서 붙이도록 수정
+          random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
+          tweet_text = f"{full_text} {random_suffix}"
 
           # 6. 최종 트윗 전송 (사진 + 텍스트)
           response = client_v2.create_tweet(
