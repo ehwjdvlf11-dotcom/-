@@ -1,4 +1,4 @@
-name: Auto Post to X (Fixed Header/Footer & 10min Random)
+name: Auto Post to X (Text Only)
 
 on:
   schedule:
@@ -33,7 +33,6 @@ jobs:
         run: |
           python - << 'EOF'
           import os
-          import glob
           import random
           import string
           from requests_oauthlib import OAuth1Session
@@ -50,19 +49,6 @@ jobs:
               resource_owner_secret=access_token_secret
           )
 
-          # 1. 저장소 내 랜덤 이미지 파일 URL 생성 (raw link)
-          repo_owner = "ehwjdvlf11-dotcom"
-          repo_name = "-"
-          
-          image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
-          image_url = ""
-
-          if image_files:
-              selected_image = random.choice(image_files)
-              print(f"선택된 이미지: {selected_image}")
-              image_url = f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/main/{selected_image}"
-
-          # 2. 본문 문구 조합
           header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
 
           middle_phrases = [
@@ -78,13 +64,8 @@ jobs:
           full_text = f"{header}\n{middle_text}"
 
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
-          
-          if image_url:
-              tweet_text = f"{full_text}\n{image_url} {random_suffix}"
-          else:
-              tweet_text = f"{full_text} {random_suffix}"
+          tweet_text = f"{full_text} {random_suffix}"
 
-          # 3. v2 pure 텍스트 작성 (이미지 링크 포함)
           tweet_url = "https://api.twitter.com/2/tweets"
           payload = {"text": tweet_text}
 
