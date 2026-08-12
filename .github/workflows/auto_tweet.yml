@@ -1,4 +1,4 @@
-name: Auto Post to X (Fixed Header/Footer & 10min Random)
+name: Auto Post to X (OAuth 2.0 Fixed)
 
 on:
   schedule:
@@ -26,8 +26,8 @@ jobs:
 
       - name: Run script
         env:
-          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
-          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+          TWITTER_CLIENT_ID: ${{ secrets.TWITTER_CLIENT_ID }}
+          TWITTER_CLIENT_SECRET: ${{ secrets.TWITTER_CLIENT_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
         run: |
@@ -37,14 +37,14 @@ jobs:
           import string
           import tweepy
 
-          api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
-          api_secret = os.environ['TWITTER_CONSUMER_SECRET'].strip()
+          client_id = os.environ['TWITTER_CLIENT_ID'].strip()
+          client_secret = os.environ['TWITTER_CLIENT_SECRET'].strip()
           access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
 
           client = tweepy.Client(
-              consumer_key=api_key,
-              consumer_secret=api_secret,
+              consumer_key=client_id,
+              consumer_secret=client_secret,
               access_token=access_token,
               access_token_secret=access_token_secret
           )
