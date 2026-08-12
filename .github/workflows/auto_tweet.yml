@@ -1,6 +1,10 @@
-name: Auto Post to X (Debug Mode)
+name: Auto Post to X (Fixed Header/Footer & 10min Random)
 
 on:
+  schedule:
+    - cron: '*/10 0-16,22-23 * * *'
+  repository_dispatch:
+    types: [run-x-bot]
   workflow_dispatch:
 
 jobs:
@@ -20,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests requests-oauthlib
 
-      - name: Run debug script
+      - name: Run script
         env:
           TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
@@ -29,9 +33,9 @@ jobs:
         run: |
           python - << 'EOF'
           import os
-          import json
           import glob
           import random
+          import string
           from requests_oauthlib import OAuth1Session
 
           api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
@@ -46,7 +50,7 @@ jobs:
               resource_owner_secret=access_token_secret
           )
 
-          print("=== 1. 이미지 업로드 테스트 ===")
+          # 1. 이미지 업로드
           image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
           media_id = None
 
@@ -58,29 +62,46 @@ jobs:
                   files = {'media': f}
                   res_media = twitter.post(upload_url, files=files)
               
-              print(f"이미지 응답 코드: {res_media.status_code}")
-              print(f"이미지 응답 본문: {res_media.text}")
-              
               if res_media.status_code in [200, 201]:
                   media_id = res_media.json().get('media_id_string')
+                  print("이미지 업로드 성공!")
+              else:
+                  print(f"이미지 업로드 실패: {res_media.text}")
           else:
-              print("이미지 파일이 존재하지 않습니다.")
+              print("업로드 가능한 사진이 없어 텍스트만 전송합니다.")
 
-          print("\n=== 2. v2 트윗 작성 테스트 ===")
-          tweet_url = "https://api.twitter.com/2/tweets"
-          payload = {"text": "테스트 트윗입니다."}
+          # 2. 본문 텍스트 생성
+          header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
+
+          middle_phrases = [
+              "트위터 #서치벤 계정 ㅅㅊㅂㅌㅅㅌ 양도",
+              "스타레일 계정판매 ㅌㅅㅌ 거래 아이디 구매",
+              "ㅅㅊㅂ 코리아 원신 서치밴테스트 서치벤테스트",
+              "솜인형 판매 테스트 #서치밴"
+          ]
+
+          random.shuffle(middle_phrases)
+
+          middle_text = "\n".join(middle_phrases)
+          full_text = f"{header}\n{middle_text}"
+
+          random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
+          tweet_text = f"{full_text} {random_suffix}"
+
+          # 3. v1.1 트윗 전송 API 호출 (403 문제 해결)
+          tweet_url = "https://api.twitter.com/1.1/statuses/update.json"
+          payload = {"status": tweet_text}
           if media_id:
-              payload["media"] = {"media_ids": [media_id]}
+              payload["media_ids"] = media_id
 
-          res_tweet = twitter.post(tweet_url, json=payload)
+          res_tweet = twitter.post(tweet_url, data=payload)
 
-          print(f"트윗 응답 코드: {res_tweet.status_code}")
-          print(f"트윗 응답 상세 내용:")
-          try:
-              print(json.dumps(res_tweet.json(), indent=2, ensure_ascii=False))
-          except Exception:
-              print(res_tweet.text)
+          print(f"상태 코드: {res_tweet.status_code}")
+          print(f"응답 내용: {res_tweet.text}")
 
-          if res_tweet.status_code not in [200, 201]:
+          if res_tweet.status_code in [200, 201]:
+              print("트윗 전송 성공!")
+          else:
+              print("트윗 전송 실패")
               exit(1)
           EOF
