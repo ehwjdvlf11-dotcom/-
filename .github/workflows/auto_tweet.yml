@@ -2,7 +2,9 @@ name: Auto Post to X with Random Image (Tweepy)
 
 on:
   schedule:
-    - cron: '*/13 0-16,22-23 * * *' # 13분 간격으로 실행
+    # 한국 시간(KST) 기준 오전 08:00 ~ 새벽 01:00 (13분 간격)
+    # (UTC 기준 23:00~23:59, 00:00~16:00)
+    - cron: '*/13 0-16,23 * * *'
   repository_dispatch:
     types: [run-x-bot]
   workflow_dispatch:
@@ -42,12 +44,8 @@ jobs:
           access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
 
-          # 1. 사용할 이미지 파일 목록 지정
+          # 1. 저장소에 올라간 전체 이미지 파일 목록 지정
           image_list = [
-              "KakaoTalk_20260811_150434564.jpg",
-              "KakaoTalk_20260811_150434564_01.jpg",
-              "KakaoTalk_20260811_150434564_02.jpg",
-              "KakaoTalk_20260811_150434564_03.jpg",
               "photo_2026-06-25_16-51-41.jpg",
               "photo_2026-07-29_10-02-25.jpg",
               "photo_2026-07-29_10-02-27.jpg",
@@ -55,7 +53,25 @@ jobs:
               "photo_2026-07-29_10-02-29.jpg",
               "photo_2026-07-29_10-02-31.jpg",
               "photo_2026-07-29_10-02-32.jpg",
-              "photo_2026-07-29_10-02-33.jpg"
+              "photo_2026-07-29_10-02-33.jpg",
+              "photo_2026-08-11_22-17-08.jpg",
+              "photo_2026-08-11_22-17-09.jpg",
+              "photo_2026-08-11_22-17-10.jpg",
+              "photo_2026-08-11_22-17-11.jpg",
+              "photo_2026-08-11_22-17-48.jpg",
+              "photo_2026-08-11_22-17-49.jpg",
+              "photo_2026-08-11_22-17-50.jpg",
+              "photo_2026-08-11_22-17-51.jpg",
+              "photo_2026-08-11_22-17-52.jpg",
+              "photo_2026-08-11_22-17-53.jpg",
+              "photo_2026-08-12_20-06-03.jpg",
+              "photo_2026-08-12_20-06-04.jpg",
+              "photo_2026-08-12_20-06-05.jpg",
+              "photo_2026-08-12_20-06-06.jpg",
+              "photo_2026-08-12_20-06-07.jpg",
+              "photo_2026-08-12_20-06-08.jpg",
+              "photo_2026-08-12_20-06-09.jpg",
+              "photo_2026-08-12_20-06-10.jpg"
           ]
 
           # 저장소에 실제 존재하는 파일만 필터링
