@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests requests-oauthlib
+          pip install tweepy requests
 
       - name: Run script
         env:
@@ -30,25 +30,49 @@ jobs:
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
         run: |
           python - << 'EOF'
           import os
+          import glob
           import random
           import string
-          from requests_oauthlib import OAuth1Session
+          import tweepy
 
           api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
           api_secret = os.environ['TWITTER_CONSUMER_SECRET'].strip()
           access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
+          bearer_token = os.environ.get('TWITTER_BEARER_TOKEN', '').strip()
 
-          twitter = OAuth1Session(
-              api_key,
-              client_secret=api_secret,
-              resource_owner_key=access_token,
-              resource_owner_secret=access_token_secret
+          # 1. Tweepy Client 생성 (v2 API용)
+          client = tweepy.Client(
+              bearer_token=bearer_token if bearer_token else None,
+              consumer_key=api_key,
+              consumer_secret=api_secret,
+              access_token=access_token,
+              access_token_secret=access_token_secret
           )
 
+          # 2. Tweepy v1.1 API 생성 (이미지 업로드용)
+          auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_token_secret)
+          api_v1 = tweepy.API(auth)
+
+          # 3. 이미지 탐색 및 업로드
+          image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
+          media_ids = []
+
+          if image_files:
+              selected_image = random.choice(image_files)
+              print(f"선택된 이미지: {selected_image}")
+              try:
+                  media = api_v1.media_upload(filename=selected_image)
+                  media_ids.append(media.media_id)
+                  print("이미지 업로드 성공!")
+              except Exception as e:
+                  print(f"이미지 업로드 실패: {e}")
+
+          # 4. 문구 조합
           header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
 
           middle_phrases = [
@@ -66,17 +90,15 @@ jobs:
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          tweet_url = "https://api.twitter.com/2/tweets"
-          payload = {"text": tweet_text}
-
-          res_tweet = twitter.post(tweet_url, json=payload)
-
-          print(f"상태 코드: {res_tweet.status_code}")
-          print(f"응답 내용: {res_tweet.text}")
-
-          if res_tweet.status_code in [200, 201]:
-              print("트윗 전송 성공!")
-          else:
-              print("트윗 전송 실패")
+          # 5. v2 트윗 생성
+          try:
+              if media_ids:
+                  response = client.create_tweet(text=tweet_text, media_ids=media_ids, user_auth=True)
+              else:
+                  response = client.create_tweet(text=tweet_text, user_auth=True)
+              
+              print(f"트윗 전송 성공! ID: {response.data['id']}")
+          except Exception as e:
+              print(f"트윗 전송 최종 실패: {e}")
               exit(1)
           EOF
