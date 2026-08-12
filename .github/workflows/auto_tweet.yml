@@ -50,7 +50,7 @@ jobs:
               resource_owner_secret=access_token_secret
           )
 
-          # 1. 이미지 업로드
+          # 1. 이미지 업로드 (v1.1)
           image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
           media_id = None
 
@@ -88,13 +88,13 @@ jobs:
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          # 3. v1.1 트윗 전송 API 호출 (403 문제 해결)
-          tweet_url = "https://api.twitter.com/1.1/statuses/update.json"
-          payload = {"status": tweet_text}
+          # 3. v2 트윗 전송 API 호출 (JSON 포맷 및 media_ids 배열 지정)
+          tweet_url = "https://api.twitter.com/2/tweets"
+          payload = {"text": tweet_text}
           if media_id:
-              payload["media_ids"] = media_id
+              payload["media"] = {"media_ids": [media_id]}
 
-          res_tweet = twitter.post(tweet_url, data=payload)
+          res_tweet = twitter.post(tweet_url, json=payload)
 
           print(f"상태 코드: {res_tweet.status_code}")
           print(f"응답 내용: {res_tweet.text}")
