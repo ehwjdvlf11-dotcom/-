@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests requests_oauthlib
+          pip install requests requests-oauthlib
 
       - name: Run script
         env:
@@ -33,25 +33,48 @@ jobs:
         run: |
           python - << 'EOF'
           import os
-          import requests
-          from requests_oauthlib import OAuth1
+          import random
+          import string
+          from requests_oauthlib import OAuth1Session
 
-          url = "https://api.twitter.com/2/tweets"
-          
-          auth = OAuth1(
-              os.environ['TWITTER_CONSUMER_KEY'].strip(),
-              os.environ['TWITTER_CONSUMER_SECRET'].strip(),
-              os.environ['TWITTER_ACCESS_TOKEN'].strip(),
-              os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
+          # .strip()으로 혹시 모를 앞뒤 공백 제거
+          ck = os.environ['TWITTER_CONSUMER_KEY'].strip()
+          cs = os.environ['TWITTER_CONSUMER_SECRET'].strip()
+          at = os.environ['TWITTER_ACCESS_TOKEN'].strip()
+          ats = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
+
+          # OAuth1Session 생성
+          twitter = OAuth1Session(
+              ck,
+              client_secret=cs,
+              resource_owner_key=at,
+              resource_owner_secret=ats
           )
 
-          response = requests.post(url, json={"text": "테스트 트윗입니다"}, auth=auth)
-          
-          print("\n================ [ X 서버 실제 응답 ] ================")
-          print("상태 코드:", response.status_code)
-          print("응답 내용:", response.text)
-          print("====================================================\n")
+          header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
+          middle_phrases = [
+              "트위터 #서치벤 계정 ㅅㅊㅂㅌㅅㅌ 양도",
+              "스타레일 계정판매 ㅌㅅㅌ 거래 아이디 구매",
+              "ㅅㅊㅂ 코리아 원신 서치밴테스트 서치벤테스트",
+              "솜인형 판매 테스트 #서치밴"
+          ]
+          random.shuffle(middle_phrases)
+          middle_text = "\n".join(middle_phrases)
+          full_text = f"{header}\n{middle_text}"
+          random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
+          tweet_text = f"{full_text} {random_suffix}"
 
-          if response.status_code not in [200, 201]:
+          url = "https://api.twitter.com/2/tweets"
+          payload = {"text": tweet_text}
+
+          response = twitter.post(url, json=payload)
+
+          print(f"상태 코드: {response.status_code}")
+          print(f"응답 내용: {response.text}")
+
+          if response.status_code in [200, 201]:
+              print("트윗 전송 성공!")
+          else:
+              print("트윗 전송 실패")
               exit(1)
           EOF
