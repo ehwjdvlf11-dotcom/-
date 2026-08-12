@@ -1,4 +1,4 @@
-name: Auto Post to X with Image (OAuth 1.0a)
+name: Auto Post to X with Random Image (Tweepy)
 
 on:
   schedule:
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests requests-oauthlib
+          pip install tweepy
 
       - name: Run script
         env:
@@ -35,40 +35,64 @@ jobs:
           import os
           import random
           import string
-          from requests_oauthlib import OAuth1Session
+          import tweepy
 
           api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
           api_secret = os.environ['TWITTER_CONSUMER_SECRET'].strip()
           access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
 
-          # OAuth 1.0a 세션 생성
-          twitter = OAuth1Session(
-              api_key,
-              client_secret=api_secret,
-              resource_owner_key=access_token,
-              resource_owner_secret=access_token_secret
+          # 1. 사용할 이미지 파일 목록 지정
+          image_list = [
+              "KakaoTalk_20260811_150434564.jpg",
+              "KakaoTalk_20260811_150434564_01.jpg",
+              "KakaoTalk_20260811_150434564_02.jpg",
+              "KakaoTalk_20260811_150434564_03.jpg",
+              "photo_2026-06-25_16-51-41.jpg",
+              "photo_2026-07-29_10-02-25.jpg",
+              "photo_2026-07-29_10-02-27.jpg",
+              "photo_2026-07-29_10-02-28.jpg",
+              "photo_2026-07-29_10-02-29.jpg",
+              "photo_2026-07-29_10-02-31.jpg",
+              "photo_2026-07-29_10-02-32.jpg",
+              "photo_2026-07-29_10-02-33.jpg"
+          ]
+
+          # 저장소에 실제 존재하는 파일만 필터링
+          valid_images = [img for img in image_list if os.path.exists(img)]
+
+          if not valid_images:
+              print("오류: 지정한 이미지 파일이 저장소 루트 경로에 하나도 없습니다!")
+              exit(1)
+
+          # 무작위로 이미지 1개 선택
+          selected_image = random.choice(valid_images)
+          print(f"선택된 이미지: {selected_image}")
+
+          # 2. Tweepy 클라이언트 설정
+          auth = tweepy.OAuth1UserHandler(
+              api_key, api_secret, access_token, access_token_secret
+          )
+          api_v1 = tweepy.API(auth)
+
+          client_v2 = tweepy.Client(
+              consumer_key=api_key,
+              consumer_secret=api_secret,
+              access_token=access_token,
+              access_token_secret=access_token_secret
           )
 
-          # 1. 이미지 파일 업로드 (v1.1 API)
-          image_path = "image.jpg"  # 저장소 내 이미지 파일 경로
-          media_id = None
+          # 3. 이미지 업로드 (v1.1 API)
+          try:
+              print("이미지 업로드 중...")
+              media = api_v1.media_upload(filename=selected_image)
+              media_id = media.media_id_string
+              print(f"이미지 업로드 성공! Media ID: {media_id}")
+          except Exception as e:
+              print(f"이미지 업로드 실패: {e}")
+              exit(1)
 
-          if os.path.exists(image_path):
-              upload_url = "https://upload.twitter.com/1.1/media/upload.json"
-              with open(image_path, "rb") as image_file:
-                  files = {"media": image_file}
-                  upload_res = twitter.post(upload_url, files=files)
-              
-              if upload_res.status_code == 200:
-                  media_id = upload_res.json().get("media_id_string")
-                  print(f"이미지 업로드 성공! Media ID: {media_id}")
-              else:
-                  print(f"이미지 업로드 실패 ({upload_res.status_code}): {upload_res.text}")
-          else:
-              print(f"경고: {image_path} 파일을 찾을 수 없습니다. 텍스트만 전송합니다.")
-
-          # 2. 문구 생성 (가격 1.5로 수정)
+          # 4. 문구 생성 (가격 1.5 반영)
           header = "서치밴 서치벤 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
           middle_phrases = [
               "트위터 #서치벤 계정 ㅅㅊㅂㅌㅅㅌ 양도",
@@ -82,21 +106,14 @@ jobs:
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          # 3. 페이로드 생성
-          payload = {"text": tweet_text}
-          if media_id:
-              payload["media"] = {"media_ids": [media_id]}
-
-          # 4. 트윗 작성 (v2 API)
-          tweet_url = "https://api.twitter.com/2/tweets"
-          res = twitter.post(tweet_url, json=payload)
-
-          print(f"상태 코드: {res.status_code}")
-          print(f"응답 내용: {res.text}")
-
-          if res.status_code in [200, 201]:
-              print("트윗 전송 성공!")
-          else:
-              print("트윗 전송 실패")
+          # 5. 트윗 작성 (v2 API)
+          try:
+              response = client_v2.create_tweet(
+                  text=tweet_text,
+                  media_ids=[media_id]
+              )
+              print(f"사진 포함 트윗 전송 성공! Tweet ID: {response.data['id']}")
+          except Exception as e:
+              print(f"트윗 작성 실패: {e}")
               exit(1)
           EOF
