@@ -1,4 +1,4 @@
-name: Auto Post to X
+name: Auto Post to X (Fixed Header/Footer & 10min Random)
 
 on:
   schedule:
@@ -22,58 +22,84 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests requests-oauthlib
+          pip install requests requests-toolbelt
 
       - name: Run script
         env:
-          TWITTER_CONSUMER_KEY: ${{ secrets.TWITTER_CONSUMER_KEY }}
-          TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
-          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
         run: |
           python - << 'EOF'
           import os
+          import glob
           import random
           import string
-          from requests_oauthlib import OAuth1Session
+          import requests
+          from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-          # .strip()으로 혹시 모를 앞뒤 공백 제거
-          ck = os.environ['TWITTER_CONSUMER_KEY'].strip()
-          cs = os.environ['TWITTER_CONSUMER_SECRET'].strip()
-          at = os.environ['TWITTER_ACCESS_TOKEN'].strip()
-          ats = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
+          bearer_token = os.environ['TWITTER_BEARER_TOKEN'].strip()
 
-          # OAuth1Session 생성
-          twitter = OAuth1Session(
-              ck,
-              client_secret=cs,
-              resource_owner_key=at,
-              resource_owner_secret=ats
-          )
+          # 1. 저장소 폴더 내 모든 이미지 파일 자동 탐색 (.jpg, .jpeg, .png)
+          image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
+          media_id = None
 
-          header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
+          if image_files:
+              selected_image = random.choice(image_files)
+              print(f"선택된 사진: {selected_image}")
+
+              upload_url = "https://upload.twitter.com/1.1/media/upload.json"
+              with open(selected_image, 'rb') as f:
+                  m = MultipartEncoder(fields={'media': (selected_image, f, 'image/jpeg')})
+                  upload_headers = {
+                      "Authorization": f"Bearer {bearer_token}",
+                      "Content-Type": m.content_type
+                  }
+                  upload_res = requests.post(upload_url, data=m, headers=upload_headers)
+
+              if upload_res.status_code in [200, 201]:
+                  media_id = upload_res.json().get('media_id_string')
+                  print(f"이미지 업로드 성공! Media ID: {media_id}")
+              else:
+                  print(f"이미지 업로드 실패 ({upload_res.status_code}): {upload_res.text}")
+          else:
+              print("업로드 가능한 사진을 찾지 못해 텍스트만 전송합니다.")
+
+          # 2. 본문 텍스트 조합
+          header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
+
           middle_phrases = [
               "트위터 #서치벤 계정 ㅅㅊㅂㅌㅅㅌ 양도",
               "스타레일 계정판매 ㅌㅅㅌ 거래 아이디 구매",
               "ㅅㅊㅂ 코리아 원신 서치밴테스트 서치벤테스트",
               "솜인형 판매 테스트 #서치밴"
           ]
+
           random.shuffle(middle_phrases)
+
           middle_text = "\n".join(middle_phrases)
           full_text = f"{header}\n{middle_text}"
+
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          url = "https://api.twitter.com/2/tweets"
+          # 3. 트윗 작성 요청
+          tweet_url = "https://api.twitter.com/2/tweets"
           payload = {"text": tweet_text}
 
-          response = twitter.post(url, json=payload)
+          if media_id:
+              payload["media"] = {"media_ids": [media_id]}
+
+          tweet_headers = {
+              "Authorization": f"Bearer {bearer_token}",
+              "Content-Type": "application/json"
+          }
+
+          response = requests.post(tweet_url, json=payload, headers=tweet_headers)
 
           print(f"상태 코드: {response.status_code}")
           print(f"응답 내용: {response.text}")
 
           if response.status_code in [200, 201]:
-              print("트윗 전송 성공!")
+              print(f"트윗 전송 성공!\n내용:\n{tweet_text}")
           else:
               print("트윗 전송 실패")
               exit(1)
