@@ -1,4 +1,4 @@
-name: Auto Post to X (Bearer Token Direct Post)
+name: Auto Post to X (OAuth 1.0a Final Fix)
 
 on:
   schedule:
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests requests-oauthlib
+          pip install tweepy
 
       - name: Run script
         env:
@@ -30,20 +30,25 @@ jobs:
           TWITTER_CONSUMER_SECRET: ${{ secrets.TWITTER_CONSUMER_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
         run: |
           python - << 'EOF'
           import os
           import random
           import string
-          import requests
-          from requests_oauthlib import OAuth1
+          import tweepy
 
           api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
           api_secret = os.environ['TWITTER_CONSUMER_SECRET'].strip()
           access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
           access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
-          bearer_token = os.environ.get('TWITTER_BEARER_TOKEN', '').strip()
+
+          # Tweepy Client - OAuth 1.0a User Context 방식 지정
+          client = tweepy.Client(
+              consumer_key=api_key,
+              consumer_secret=api_secret,
+              access_token=access_token,
+              access_token_secret=access_token_secret
+          )
 
           header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
 
@@ -62,30 +67,10 @@ jobs:
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          tweet_url = "https://api.twitter.com/2/tweets"
-          payload = {"text": tweet_text}
-
-          # 1차 시도: OAuth 1.0a User Context
-          auth = OAuth1(api_key, api_secret, access_token, access_token_secret)
-          headers = {"Content-Type": "application/json"}
-
-          res = requests.post(tweet_url, auth=auth, json=payload, headers=headers)
-
-          # 2차 시도: Bearer Token (1차 실패 시 자동 전환)
-          if res.status_code == 403 and bearer_token:
-              print("OAuth1 403 발생 -> Bearer Token 인증으로 재시도합니다.")
-              bearer_headers = {
-                  "Authorization": f"Bearer {bearer_token}",
-                  "Content-Type": "application/json"
-              }
-              res = requests.post(tweet_url, json=payload, headers=bearer_headers)
-
-          print(f"상태 코드: {res.status_code}")
-          print(f"응답 내용: {res.text}")
-
-          if res.status_code in [200, 201]:
-              print("트윗 전송 성공!")
-          else:
-              print("트윗 전송 실패")
+          try:
+              response = client.create_tweet(text=tweet_text)
+              print(f"트윗 전송 성공! Tweet ID: {response.data['id']}")
+          except Exception as e:
+              print(f"트윗 전송 실패: {e}")
               exit(1)
           EOF
