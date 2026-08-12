@@ -33,7 +33,6 @@ jobs:
         run: |
           python - << 'EOF'
           import os
-          import glob
           import random
           import string
           from requests_oauthlib import OAuth1Session
@@ -50,27 +49,6 @@ jobs:
               resource_owner_secret=access_token_secret
           )
 
-          # 1. 이미지 업로드 (v1.1)
-          image_files = glob.glob('*.jpg') + glob.glob('*.jpeg') + glob.glob('*.png') + glob.glob('*.PNG') + glob.glob('*.JPG')
-          media_id = None
-
-          if image_files:
-              selected_image = random.choice(image_files)
-              print(f"선택된 이미지: {selected_image}")
-              upload_url = "https://upload.twitter.com/1.1/media/upload.json"
-              with open(selected_image, 'rb') as f:
-                  files = {'media': f}
-                  res_media = twitter.post(upload_url, files=files)
-              
-              if res_media.status_code in [200, 201]:
-                  media_id = res_media.json().get('media_id_string')
-                  print("이미지 업로드 성공!")
-              else:
-                  print(f"이미지 업로드 실패: {res_media.text}")
-          else:
-              print("업로드 가능한 사진이 없어 텍스트만 전송합니다.")
-
-          # 2. 본문 텍스트 생성
           header = "서치밴 서치벤 안걸려있는 X 엑스 15,000 양도\n프로필 문의"
 
           middle_phrases = [
@@ -88,11 +66,8 @@ jobs:
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          # 3. v2 트윗 전송 API 호출 (JSON 포맷 및 media_ids 배열 지정)
           tweet_url = "https://api.twitter.com/2/tweets"
           payload = {"text": tweet_text}
-          if media_id:
-              payload["media"] = {"media_ids": [media_id]}
 
           res_tweet = twitter.post(tweet_url, json=payload)
 
