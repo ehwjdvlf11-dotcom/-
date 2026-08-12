@@ -37,12 +37,11 @@ jobs:
           import string
           import tweepy
 
-          api_key = os.environ['TWITTER_CONSUMER_KEY']
-          api_secret = os.environ['TWITTER_CONSUMER_SECRET']
-          access_token = os.environ['TWITTER_ACCESS_TOKEN']
-          access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
+          api_key = os.environ['TWITTER_CONSUMER_KEY'].strip()
+          api_secret = os.environ['TWITTER_CONSUMER_SECRET'].strip()
+          access_token = os.environ['TWITTER_ACCESS_TOKEN'].strip()
+          access_token_secret = os.environ['TWITTER_ACCESS_TOKEN_SECRET'].strip()
 
-          # 1. 트윗 작성용 Client (v2 - 무료 지원)
           client = tweepy.Client(
               consumer_key=api_key,
               consumer_secret=api_secret,
@@ -50,8 +49,6 @@ jobs:
               access_token_secret=access_token_secret
           )
 
-          # -------------------------------------------------------------
-          # [문구 설정]
           header = "서치밴 안걸려있는 X 엑스 1.5 양도\n프로필 문의"
 
           middle_phrases = [
@@ -66,12 +63,9 @@ jobs:
           middle_text = "\n".join(middle_phrases)
           full_text = f"{header}\n{middle_text}"
 
-          # 대괄호 [] 없이 랜덤 영문 3자리만 띄어쓰기 후 추가
           random_suffix = ''.join(random.choices(string.ascii_letters, k=3))
           tweet_text = f"{full_text} {random_suffix}"
 
-          # 2. 텍스트 트윗 전송
           response = client.create_tweet(text=tweet_text)
-
           print(f"트윗 전송 성공! 내용:\n{tweet_text}\nID: {response.data['id']}")
           EOF
