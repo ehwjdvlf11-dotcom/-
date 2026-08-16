@@ -1,78 +1,740 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>X 계정 구매 및 실시간 조회</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
-    body { background-color: #111827; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .card { background: #1f2937; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); width: 100%; max-width: 520px; border: 1px solid #374151; }
-    h2 { text-align: center; color: #60a5fa; margin-bottom: 8px; font-size: 22px; }
-    p.desc { text-align: center; color: #9ca3af; font-size: 13px; margin-bottom: 20px; }
-    
-    .section-title { color: #f3f4f6; font-size: 16px; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-    
-    .price-card { background: #111827; border: 1px solid #374151; border-radius: 10px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-    .price-info { display: flex; flex-direction: column; gap: 4px; }
-    .price-name { color: #e5e7eb; font-size: 15px; font-weight: 600; }
-    .price-desc { color: #fbbf24; font-size: 12px; }
-    .price-value { color: #60a5fa; font-size: 16px; font-weight: bold; }
-    
-    .notice-box { background: #111827; border: 1px solid #374151; border-radius: 10px; padding: 16px; margin-top: 20px; }
-    .notice-title { color: #fbbf24; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
-    .notice-box ol { padding-left: 16px; color: #9ca3af; font-size: 12px; line-height: 1.6; }
-    .notice-box li { margin-bottom: 6px; }
-    .notice-box strong { color: #f3f4f6; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> X 계정 구매 및 실시간 조회 시스템 (High-End Mono)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- TOTP 생성을 위한 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.3.2/otpauth.umd.min.js"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background-color: #020202; 
+            overflow-x: hidden;
+            perspective: 1000px;
+        }
+
+        /* 🖤 웅장하고 입체적인 하이엔드 메탈릭 그리드 & 빛 무드 */
+        .x-bg-pattern {
+            position: fixed;
+            top: -50%; left: -50%; right: -50%; bottom: -50%;
+            width: 200%; height: 200%;
+            background-image: 
+                radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 60px 60px, 60px 60px;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* 🖤 웅장한 다이아몬드 오로라 빔 애니메이션 */
+        .aurora-beam {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+            animation: aurora-move 15s infinite alternate ease-in-out;
+        }
+
+        @keyframes aurora-move {
+            0% { transform: translate(-20%, -20%) scale(1); opacity: 0.5; }
+            50% { transform: translate(15%, 25%) scale(1.3); opacity: 0.9; }
+            100% { transform: translate(25%, -15%) scale(1.1); opacity: 0.6; }
+        }
+
+        /* 🖤 배경 유동형 X 로고 웅장함 극대화 */
+        .floating-x-logos {
+            position: absolute;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            opacity: 0.045;
+            transform: rotate(-15deg) scale(1.4);
+            animation: bg-scroll 50s linear infinite;
+        }
+
+        .bg-x-item {
+            font-size: 150px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 60px rgba(255, 255, 255, 0.8);
+            user-select: none;
+        }
+
+        @keyframes bg-scroll {
+            0% { transform: rotate(-15deg) translateY(0); }
+            100% { transform: rotate(-15deg) translateY(-350px); }
+        }
+
+        /* 🖤 하이엔드 글래스몰피즘 (다이아몬드 실버 엣지) */
+        .x-glass {
+            background: linear-gradient(135deg, rgba(15, 15, 15, 0.94) 0%, rgba(3, 3, 3, 0.99) 100%);
+            backdrop-filter: blur(50px);
+            -webkit-backdrop-filter: blur(50px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 
+                0 50px 120px -20px rgba(0, 0, 0, 0.95),
+                0 0 80px rgba(255, 255, 255, 0.06),
+                inset 0 1px 2px rgba(255, 255, 255, 0.5),
+                inset 0 -3px 8px rgba(0, 0, 0, 0.95);
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out, box-shadow 0.3s ease;
+        }
+
+        /* 🖤 내부 카드 디자인 (입체감 강화) */
+        .x-inner-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 15px 35px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .x-inner-card:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.3), 0 20px 40px rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* 🖤 프리미엄 화이트 네온 버튼 */
+        .neon-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #d4d4d8 100%);
+            color: #000000;
+            box-shadow: 0 12px 35px -5px rgba(255, 255, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+        .neon-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(rgba(255,255,255,0.6), transparent);
+            transform: rotate(45deg) translateY(-100%);
+            transition: transform 0.6s;
+        }
+        .neon-btn:hover::after {
+            transform: rotate(45deg) translateY(100%);
+        }
+        .neon-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ffffff 0%, #f4f4f5 100%);
+            box-shadow: 0 18px 45px -5px rgba(255, 255, 255, 0.5), inset 0 1px 2px rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        /* 🖤 서브 시크 버튼 */
+        .sub-neon-btn {
+            background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(5, 5, 5, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+        }
+        .sub-neon-btn:hover {
+            background: linear-gradient(135deg, rgba(40, 40, 40, 1) 0%, rgba(15, 15, 15, 0.95) 100%);
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 18px 35px -5px rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.95); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.6); }
+
+        @keyframes float-3d {
+            0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+            50% { transform: translateY(-6px) rotateX(1deg) rotateY(-1deg); }
+        }
+        .animate-float-3d {
+            animation: float-3d 6s infinite ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-text {
+            background: linear-gradient(90deg, #ffffff 0%, #888890 30%, #ffffff 50%, #888890 70%, #ffffff 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            animation: shimmer 6s linear infinite;
+        }
+
+        /* 🖤 하이엔드 인풋 필드 */
+        .input-cyber {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.95), rgba(12, 12, 12, 0.9));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.04);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .input-cyber:focus {
+            border-color: #ffffff;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 255, 255, 0.25), 0 0 10px rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+    </style>
 </head>
-<body>
+<body class="text-zinc-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-white selection:text-black relative">
 
-  <div class="card">
-    <h2>X 계정 구매 및 실시간 조회</h2>
-    <p class="desc">계정 가격 및 거래 안내를 확인해 주세요.</p>
-    
-    <div class="section-title">📦 X 계정 양도 가격표 안내</div>
-
-    <div class="price-card">
-      <div class="price-info">
-        <span class="price-name">◆ 일반 계정</span>
-      </div>
-      <span class="price-value">15,000원</span>
+    <!-- 웅장한 배경 레이어 -->
+    <div class="x-bg-pattern">
+        <div class="aurora-beam" style="top: 10%; left: 15%;"></div>
+        <div class="aurora-beam" style="bottom: 10%; right: 15%; animation-delay: 7s;"></div>
+        <div class="floating-x-logos">
+            <span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span>
+            <span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span>
+            <span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span>
+            <span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span><span class="bg-x-item">𝕏</span>
+        </div>
     </div>
 
-    <div class="price-card">
-      <div class="price-info">
-        <span class="price-name">◆ 이메일 지급 계정</span>
-        <span class="price-desc">(X계정 잠김 및 문제시 해결이 가능한 이메일 지급)</span>
-      </div>
-      <span class="price-value">20,000원</span>
+    <!-- 메인 컨테이너 -->
+    <div id="main-card" class="w-full max-w-lg x-glass rounded-[36px] p-7 md:p-10 relative overflow-hidden z-10 my-6 animate-float-3d">
+        
+        <!-- 상단 다이아몬드 샤인 바 -->
+        <div class="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_30px_rgba(255,255,255,1)]"></div>
+
+        <div id="header-section" class="text-center mb-7 relative">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-[24px] bg-gradient-to-br from-zinc-900 via-black to-zinc-950 border border-white/35 text-white text-3xl font-black mb-4 shadow-2xl shadow-white/15 group cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/15 blur-lg"></div>
+                <span class="relative group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 text-white drop-shadow-[0_0_20px_rgba(255,255,255,1)]">𝕏</span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2 drop-shadow-md">
+                <span class="shimmer-text">X 계정 구매 및 실시간 조회</span>
+            </h1>
+            <p id="sub-title" class="text-zinc-400 text-xs md:text-sm mt-2 font-semibold tracking-wide transition-all duration-300">💡 아래 필독 안내 사항을 먼저 확인해 주세요!</p>
+        </div>
+
+        <!-- STEP -1 (필독 안내 화면) -->
+        <div id="step-intro" class="space-y-5 transition-all duration-500">
+            <div class="x-inner-card border-zinc-700/60 rounded-[24px] p-6 text-xs md:text-sm text-zinc-300 space-y-4 bg-gradient-to-b from-zinc-900/50 to-transparent shadow-xl">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <span class="text-white font-black text-sm md:text-base tracking-tight flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span> 🚨 필수 필독 안내
+                    </span>
+                    <span class="text-[11px] text-white font-bold bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-700 shadow-md">
+                        💸 송금 선행 필수
+                    </span>
+                </div>
+                <p class="text-zinc-300 leading-relaxed space-y-2 pt-0.5">
+                    🛍️ 구매하실 금액만큼 <strong class="text-white underline decoration-white/70 underline-offset-4 font-black">오픈채팅으로 송금해주신 뒤</strong> 관리자에게 발급받은 코드를 입력하시면 계정 정보가 즉시 제공됩니다.
+                </p>
+                <div class="bg-black/90 p-3.5 rounded-xl border border-zinc-800 text-zinc-200 font-semibold text-center tracking-tight shadow-inner flex items-center justify-center gap-2 text-xs md:text-sm">
+                    <span>⚠️</span> "송금하면 되나요?", "이 가격 송금하면 되나요?" 문의 금지!
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3.5">
+                <button onclick="goToPriceStep()" 
+                    class="w-full neon-btn font-black rounded-2xl text-xs md:text-sm cursor-pointer active:scale-[0.97] tracking-tight flex flex-col items-center justify-center gap-1.5 shadow-xl text-center">
+                    <span class="text-lg">💰</span> 가격표 및 거래 방식
+                </button>
+                <button onclick="goToQueryStep()" 
+                    class="w-full sub-neon-btn text-zinc-300 hover:text-white font-black rounded-2xl text-xs md:text-sm cursor-pointer active:scale-[0.97] tracking-tight flex flex-col items-center justify-center gap-1.5 text-center">
+                    <span class="text-lg">🔑</span> 코드 입력 바로가기
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 0 (가격표 화면) -->
+        <div id="step-price" class="hidden space-y-5 transition-all duration-500">
+            <div class="flex justify-between items-center mb-1">
+                <button onclick="goToIntroStep()" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors font-semibold py-2 px-1">
+                    ← 🔙 필독 안내 다시보기
+                </button>
+            </div>
+
+            <div class="x-inner-card border-white/20 rounded-[24px] p-6 text-xs md:text-sm text-zinc-300 space-y-4 shadow-xl">
+                <div class="flex items-center gap-2 text-white font-black text-sm md:text-base mb-1">
+                    <span>💳</span> X 계정 양도 가격표 안내
+                </div>
+                
+                <div class="space-y-2.5">
+                    <div class="x-inner-card p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-zinc-300 font-semibold flex items-center gap-2"><span>🔹</span> 일반 계정</span>
+                        <span class="text-white font-black text-sm md:text-base">15,000원</span>
+                    </div>
+                    <div class="x-inner-card p-4 rounded-xl flex justify-between items-center">
+                        <div class="mr-2">
+                            <span class="text-zinc-300 font-semibold flex items-center gap-2"><span>🔹</span> 이메일 지급 계정</span>
+                            <span class="text-[11px] text-zinc-400 font-medium block mt-0.5">✨ (이메일 잠김 시 자체 해결 가능)</span>
+                        </div>
+                        <span class="text-white font-black text-sm md:text-base shrink-0">20,000원</span>
+                    </div>
+                    <div class="x-inner-card p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-zinc-300 font-semibold flex items-center gap-2"><span>📦</span> 5개 일괄 구매 <span class="text-[10px] text-black bg-white px-1.5 py-0.5 rounded font-black">할인</span></span>
+                        <span class="text-white font-black text-sm md:text-base">70,000원</span>
+                    </div>
+                    <div class="x-inner-card p-4 rounded-xl flex justify-between items-center">
+                        <span class="text-zinc-300 font-semibold flex items-center gap-2"><span>📦</span> 10개 일괄 구매 <span class="text-[10px] text-black bg-white px-1.5 py-0.5 rounded font-black">할인</span></span>
+                        <span class="text-white font-black text-sm md:text-base">130,000원</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-zinc-800 pt-4 space-y-2">
+                    <div class="flex items-center gap-2 text-zinc-200 font-black text-xs md:text-sm">
+                        <span>🛡️</span> 송금 및 안전 거래 안내 (3자 사기 방지)
+                    </div>
+                    <p class="text-zinc-400 leading-relaxed space-y-1">
+                        • 🔒 <strong>카카오페이 익명송금</strong>을 이용합니다.<br>
+                        • 🛒 <strong>번개장터</strong>를 통한 거래도 가능합니다. <span class="text-zinc-300 font-semibold">(⚠️ 단, 2개 이상 구매 시에만 가능)</span>
+                    </p>
+                </div>
+            </div>
+
+            <a href="https://open.kakao.com/o/sjPGWOFi" target="_blank" 
+                class="w-full bg-zinc-900 hover:bg-black text-white border border-white/35 hover:border-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm shadow-xl hover:scale-[1.01]">
+                <span>💬</span> <strong>1:1 고객센터 문의하기 (오픈채팅 바로가기)</strong>
+            </a>
+
+            <div class="flex items-center gap-3 x-inner-card p-4 rounded-2xl shadow">
+                <input type="checkbox" id="agree-price-checkbox" onchange="checkPriceAgreement()" class="w-5 h-5 accent-white rounded cursor-pointer">
+                <label for="agree-price-checkbox" class="text-zinc-200 font-semibold text-xs md:text-sm cursor-pointer select-none">
+                    ✨ 위 가격 및 거래 방식을 모두 확인했습니다.
+                </label>
+            </div>
+
+            <button id="btn-next-price" onclick="goToQueryStep()" disabled
+                class="w-full bg-zinc-900/60 text-zinc-600 font-black py-4.5 rounded-2xl transition-all cursor-not-allowed border border-zinc-800 text-sm md:text-base">
+                다음으로 넘어가기 ➡️
+            </button>
+        </div>
+
+        <!-- STEP 1 (조회하기 화면) -->
+        <div id="step-query" class="hidden space-y-6 transition-all duration-500">
+            <div class="flex justify-between items-center mb-1">
+                <button onclick="goToIntroStep()" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors font-semibold py-2 px-1">
+                    ← 🔙 처음으로 돌아가기
+                </button>
+            </div>
+
+            <div class="flex rounded-2xl bg-black/90 p-1.5 border border-zinc-800 shadow-inner gap-2">
+                <button id="tab-general" onclick="switchTab('general')" class="flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all bg-white text-black shadow-lg shadow-white/15">
+                    👤 일반 계정 조회
+                </button>
+                <button id="tab-email" onclick="switchTab('email')" class="flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all text-zinc-400 hover:text-white">
+                    📧 이메일 계정 조회
+                </button>
+            </div>
+
+            <!-- 발급 코드 입력 섹션 -->
+            <div class="x-inner-card p-5 md:p-6 rounded-[24px] border-white/20 bg-gradient-to-b from-white/[0.03] to-transparent shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <label id="input-label" class="text-xs md:text-sm font-black text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> 🔑 발급 코드 입력
+                    </label>
+                    <span class="text-[11px] text-white font-bold bg-white/10 px-2.5 py-1 rounded-lg border border-white/25">
+                        즉시 발급
+                    </span>
+                </div>
+                
+                <input type="text" id="input-code" placeholder="발급 코드를 여기에 입력하세요" 
+                    class="w-full input-cyber rounded-2xl px-5 py-4 text-base md:text-lg text-white placeholder-zinc-600 font-bold tracking-wider focus:outline-none">
+                
+                <button onclick="openAgreementModal()" 
+                    class="w-full neon-btn font-black py-4 rounded-2xl text-sm md:text-base active:scale-[0.97] tracking-wide flex items-center justify-center gap-2 shadow-xl">
+                    <span>🔍</span> 계정 정보 안전 조회하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 결과 박스 -->
+        <div id="result-box" class="mt-2 hidden space-y-3.5">
+            <div class="x-inner-card rounded-2xl p-4 shadow">
+                <span class="block text-xs font-semibold text-zinc-400 mb-1">📦 상품 종류</span>
+                <div id="res-product-type" class="text-white font-bold text-sm md:text-base">정보 없음</div>
+            </div>
+
+            <div class="x-inner-card rounded-2xl p-4 flex items-center justify-between shadow">
+                <div class="overflow-hidden mr-3 flex-1">
+                    <span class="block text-xs font-semibold text-zinc-400 mb-1">🆔 계정 ID</span>
+                    <div id="res-account-id" class="text-white font-bold text-sm md:text-base truncate">정보 없음</div>
+                </div>
+                <button id="btn-copy-account-id" onclick="copyText('res-account-id', this)" class="bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow">📋 복사</button>
+            </div>
+
+            <div class="x-inner-card rounded-2xl p-4 flex items-center justify-between shadow">
+                <div class="overflow-hidden mr-3 flex-1">
+                    <span class="block text-xs font-semibold text-zinc-400 mb-1">🔑 비밀번호</span>
+                    <div id="res-account-pw" class="text-white font-bold text-sm md:text-base truncate">정보 없음</div>
+                </div>
+                <button id="btn-copy-account-pw" onclick="copyText('res-account-pw', this)" class="bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow">📋 복사</button>
+            </div>
+
+            <div id="email-id-container" class="x-inner-card rounded-2xl p-4 flex items-center justify-between hidden shadow">
+                <div class="overflow-hidden mr-3 flex-1">
+                    <span class="block text-xs font-semibold text-zinc-400 mb-1">📧 이메일 아이디</span>
+                    <div id="res-email-id" class="text-white font-bold text-sm md:text-base truncate">정보 없음</div>
+                </div>
+                <button id="btn-copy-email-id" onclick="copyText('res-email-id', this)" class="bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow">📋 복사</button>
+            </div>
+
+            <div id="email-pw-container" class="x-inner-card rounded-2xl p-4 flex items-center justify-between hidden shadow">
+                <div class="overflow-hidden mr-3 flex-1">
+                    <span class="block text-xs font-semibold text-zinc-400 mb-1">🔒 이메일 비밀번호</span>
+                    <div id="res-email-pw" class="text-white font-bold text-sm md:text-base truncate">정보 없음</div>
+                </div>
+                <button id="btn-copy-email-pw" onclick="copyText('res-email-pw', this)" class="bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow">📋 복사</button>
+            </div>
+
+            <div class="x-inner-card rounded-2xl p-4 flex items-center justify-between shadow">
+                <div class="overflow-hidden mr-3 flex-1">
+                    <span class="block text-xs font-semibold text-zinc-400 mb-1">🛡️ 실시간 2차 인증 (OTP) 번호</span>
+                    <div class="flex items-center gap-3">
+                        <div id="res-otp" class="text-white font-black tracking-widest text-lg md:text-xl drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]">--- ---</div>
+                        <span id="res-otp-timer" class="text-xs text-zinc-400 font-mono font-semibold"></span>
+                    </div>
+                </div>
+                <button id="btn-copy-otp" onclick="copyText('res-otp', this)" class="bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow">📋 복사</button>
+            </div>
+
+            <div class="x-inner-card rounded-2xl p-4 text-center border-white/20 bg-white/[0.03] shadow">
+                <p class="text-xs md:text-sm font-semibold text-zinc-300 tracking-tight">
+                    💌 오픈채팅방 방 하트 꾹과 예쁜 후기 남겨주시면 정말 감사하겠습니다! (ღ)
+                </p>
+            </div>
+
+            <!-- 요청하신 결과 화면 하단 '처음으로 돌아가기' 버튼 -->
+            <button onclick="resetToHome()" 
+                class="w-full sub-neon-btn text-zinc-300 hover:text-white font-black rounded-2xl text-xs md:text-sm cursor-pointer active:scale-[0.97] tracking-tight flex items-center justify-center gap-2 shadow-xl pt-4 pb-4">
+                <span>🏠</span> <strong>처음으로 돌아가기</strong>
+            </button>
+        </div>
+
+        <div id="error-box" class="mt-4 hidden p-4 bg-zinc-900 border border-zinc-700 rounded-2xl text-center text-zinc-300 text-xs md:text-sm font-semibold shadow-inner">
+            ❌ 일치하는 정보를 찾을 수 없습니다. 코드를 다시 확인해 주세요!
+            <button onclick="resetToHome()" class="mt-3 w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl text-xs">처음으로 가기</button>
+        </div>
     </div>
 
-    <div class="price-card">
-      <div class="price-info">
-        <span class="price-name">📖 5개 일괄 구매 <span style="background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; color:#facc15;">할인</span></span>
-      </div>
-      <span class="price-value">70,000원</span>
+    <!-- Modal (약관 동의 화면) -->
+    <div id="agreement-modal" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 flex items-center justify-center p-4 hidden">
+        <div class="w-full max-w-md x-glass rounded-[32px] p-6 md:p-8 shadow-2xl space-y-4 border border-zinc-700 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm md:text-base font-black text-white flex items-center gap-2">
+                    <span>⚠️</span> 필수 숙지사항 및 이용약관 동의
+                </h3>
+                <button onclick="closeAgreementModal()" class="text-zinc-400 hover:text-white text-2xl font-bold p-2">×</button>
+            </div>
+
+            <!-- 스크롤 영역 -->
+            <div id="terms-box" onscroll="checkScrollBottom()" class="border border-zinc-700 bg-black/70 rounded-2xl p-4 text-xs md:text-sm text-zinc-300 space-y-3 max-h-[190px] overflow-y-auto shadow-inner">
+                <div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+                    <p class="text-white font-black flex items-center gap-1"><span>🚨</span> 계정 양도 이용 주의사항</p>
+                    <p>• 계정 양도 이후 발생하는 모든 사용 책임(닉네임, 아이디, 이메일, 비밀번호 변경 및 게시글 삭제 포함)은 <strong class="text-white underline">구매자 본인</strong>에게 있습니다.</p>
+                    <p>• 사기, 마약, 불법 홍보 등 타인에게 피해를 주는 용도로 사용 시 계정은 <strong class="text-zinc-100 font-bold underline">즉시 회수</strong>됩니다.</p>
+                </div>
+                
+                <div class="space-y-1.5 pt-1">
+                    <p class="text-white font-bold">1️⃣ 로그인 및 2차 보안 (2FA)</p>
+                    <p class="text-zinc-400 pl-2">- ID 및 PW 입력 후, 화면에 실시간으로 제공되는 2FA(OTP 인증번호)를 정확히 입력해 주세요.</p>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <p class="text-white font-bold">2️⃣ 서치벤 테스트 및 환불 규정</p>
+                    <p class="text-zinc-400 pl-2">- 계정 수령 직후 서치벤 테스트를 진행해 주시기 바라며, 노출되지 않을 경우 즉시 교환 및 환불이 가능합니다. <strong class="text-zinc-200">(노출된 시점부터는 환불 절대 불가)</strong></p>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <p class="text-white font-bold">3️⃣ 계정 활성화 필수 작업</p>
+                    <p class="text-zinc-400 pl-2">- 수령 직후 팔로우, 게시글 업로드, 리트윗 등 정상적인 활동 흔적을 반드시 남겨주셔야 계정이 안전하게 유지됩니다.</p>
+                </div>
+
+                <div class="space-y-1.5 pt-1">
+                    <p class="text-white font-bold">4️⃣ E-mail 미구매자 안내</p>
+                    <p class="text-zinc-400 pl-2">- 이메일 미구매자는 계정을 이용하다 계정 잠김 현상이 발생할 수 있습니다. 계정 로그인 후 48시간 뒤에 메일 변경이 가능하니 꼭 하시길 바랍니다.</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 x-inner-card p-4 rounded-2xl shadow">
+                <input type="checkbox" id="modal-agree-checkbox" onchange="checkModalAgreement()" disabled class="w-5 h-5 accent-white rounded cursor-not-allowed opacity-50">
+                <label id="modal-label" for="modal-agree-checkbox" class="text-zinc-500 font-semibold text-xs md:text-sm cursor-not-allowed select-none">
+                    🔒 약관을 맨 아래로 내려주세요!
+                </label>
+            </div>
+
+            <button id="btn-modal-confirm" onclick="confirmSearch()" disabled
+                class="w-full bg-zinc-900/60 text-zinc-600 font-black py-4.5 rounded-2xl transition-all cursor-not-allowed border border-zinc-800 text-sm md:text-base">
+                동의하고 계정 발급(조회)하기 🚀
+            </button>
+        </div>
     </div>
 
-    <div class="price-card">
-      <div class="price-info">
-        <span class="price-name">📖 10개 일괄 구매 <span style="background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; color:#facc15;">할인</span></span>
-      </div>
-      <span class="price-value">130,000원</span>
+    <div class="mt-6 text-zinc-600 text-xs tracking-widest uppercase font-semibold z-10">
+        © X Account Secure System
     </div>
 
-    <div class="notice-box">
-      <div class="notice-title">⚠️ 필수 숙지사항</div>
-      <ol>
-        <li><strong>로그인 및 2차 인증:</strong> ID/PW 입력 후 2FA 코드를 입력해 주세요.</li>
-        <li><strong>서치벤 테스트 및 규정:</strong> 최초 노출 불가 시 즉시 교환 가능하며 결과 통보 필수 (미답변 시 정상 간주)</li>
-        <li><strong>계정 활성화 필수 작업:</strong> 수령 즉시 팔로우/좋아요 등의 활동을 남겨주세요.</li>
-        <li><strong>계정 양도 이후:</strong> 계정 양도이후 계정 ID,PW 이메일,이름 변경등 책임은 구매자에게 있습니다 양도자에게 묻지 말고 사용해주세요. (X계정 잠김 및 문제시 해결이 가능한 이메일 지급)</li>
-      </ol>
-    </div>
-  </div>
+    <script>
+        const SUPABASE_URL = 'https://gjotvoufqqvrckicwpnj.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_U42wGuvhkR-KON09lk9lfA_LW9I-9gV';
+        let supabaseClient = null;
+        let currentTab = 'general';
+        let otpInterval = null;
 
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) { console.error(e); }
+
+        const mainCard = document.getElementById('main-card');
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+            mainCard.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        document.addEventListener('mouseleave', () => {
+            mainCard.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        function goToIntroStep() {
+            document.getElementById('step-price').classList.add('hidden');
+            document.getElementById('step-query').classList.add('hidden');
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('error-box').classList.add('hidden');
+            document.getElementById('header-section').classList.remove('hidden');
+            document.getElementById('step-intro').classList.remove('hidden');
+            document.getElementById('sub-title').innerText = "💡 아래 필독 안내 사항을 먼저 확인해 주세요!";
+            if (otpInterval) clearInterval(otpInterval);
+        }
+
+        function resetToHome() {
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('error-box').classList.add('hidden');
+            document.getElementById('input-code').value = '';
+            goToIntroStep();
+        }
+
+        function goToPriceStep() {
+            document.getElementById('step-intro').classList.add('hidden');
+            document.getElementById('step-query').classList.add('hidden');
+            document.getElementById('step-price').classList.remove('hidden');
+            document.getElementById('sub-title').innerText = "💳 계정 가격 및 거래 안내를 확인해 주세요.";
+        }
+
+        function checkPriceAgreement() {
+            const isChecked = document.getElementById('agree-price-checkbox').checked;
+            const btnNext = document.getElementById('btn-next-price');
+            if (isChecked) {
+                btnNext.disabled = false;
+                btnNext.className = "w-full neon-btn font-black py-4.5 rounded-2xl text-sm md:text-base cursor-pointer tracking-wide flex items-center justify-center gap-2 shadow-xl";
+                btnNext.innerHTML = "다음 단계로 넘어가기 ➡️";
+            } else {
+                btnNext.disabled = true;
+                btnNext.className = "w-full bg-zinc-900/60 text-zinc-600 font-bold py-4.5 rounded-2xl transition-all cursor-not-allowed border border-zinc-800 text-sm md:text-base";
+                btnNext.innerHTML = "다음으로 넘어가기";
+            }
+        }
+
+        function goToQueryStep() {
+            document.getElementById('step-intro').classList.add('hidden');
+            document.getElementById('step-price').classList.add('hidden');
+            document.getElementById('step-query').classList.remove('hidden');
+            document.getElementById('sub-title').innerText = "🔍 발급 코드를 입력하여 계정을 조회하세요.";
+        }
+
+        function switchTab(mode) {
+            currentTab = mode;
+            const tabGeneral = document.getElementById('tab-general');
+            const tabEmail = document.getElementById('tab-email');
+            const inputLabel = document.getElementById('input-label');
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('error-box').classList.add('hidden');
+            document.getElementById('input-code').value = '';
+            if (otpInterval) clearInterval(otpInterval);
+
+            if (mode === 'general') {
+                tabGeneral.className = "flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all bg-white text-black shadow-lg shadow-white/15";
+                tabEmail.className = "flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all text-zinc-400 hover:text-white";
+                inputLabel.innerHTML = `<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> 🔑 발급 코드 입력`;
+            } else {
+                tabEmail.className = "flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all bg-white text-black shadow-lg shadow-white/15";
+                tabGeneral.className = "flex-1 py-3 text-xs md:text-sm font-bold rounded-xl transition-all text-zinc-400 hover:text-white";
+                inputLabel.innerHTML = `<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> 📧 이메일 주문번호 / 코드 입력`;
+            }
+        }
+
+        function openAgreementModal() {
+            if (!document.getElementById('input-code').value.trim()) {
+                alert('⚠️ 코드를 입력해주세요!');
+                return;
+            }
+            
+            const checkbox = document.getElementById('modal-agree-checkbox');
+            const label = document.getElementById('modal-label');
+            const termsBox = document.getElementById('terms-box');
+            
+            checkbox.checked = false;
+            checkbox.disabled = true;
+            checkbox.className = "w-5 h-5 accent-white rounded cursor-not-allowed opacity-50";
+            label.className = "text-zinc-500 font-semibold text-xs md:text-sm cursor-not-allowed select-none";
+            label.innerText = "🔒 약관을 맨 아래로 내려주세요!";
+            
+            termsBox.scrollTop = 0;
+
+            const btnConfirm = document.getElementById('btn-modal-confirm');
+            btnConfirm.disabled = true;
+            btnConfirm.className = "w-full bg-zinc-900/60 text-zinc-600 font-bold py-4.5 rounded-2xl transition-all cursor-not-allowed border border-zinc-800 text-sm md:text-base";
+            btnConfirm.innerHTML = "동의하고 계정 발급(조회)하기 🚀";
+            
+            document.getElementById('agreement-modal').classList.remove('hidden');
+        }
+
+        function checkScrollBottom() {
+            const termsBox = document.getElementById('terms-box');
+            if (termsBox.scrollTop + termsBox.clientHeight >= termsBox.scrollHeight - 2) {
+                enableCheckbox();
+            }
+        }
+
+        function enableCheckbox() {
+            const checkbox = document.getElementById('modal-agree-checkbox');
+            const label = document.getElementById('modal-label');
+            if (checkbox.disabled) {
+                checkbox.disabled = false;
+                checkbox.className = "w-5 h-5 accent-white rounded cursor-pointer";
+                label.className = "text-zinc-200 font-semibold text-xs md:text-sm cursor-pointer select-none";
+                label.innerText = "✨ 위 내용을 모두 숙지하였으며 이에 동의합니다.";
+            }
+        }
+
+        function closeAgreementModal() {
+            document.getElementById('agreement-modal').classList.add('hidden');
+        }
+
+        function checkModalAgreement() {
+            const isChecked = document.getElementById('modal-agree-checkbox').checked;
+            const btnConfirm = document.getElementById('btn-modal-confirm');
+            if (isChecked) {
+                btnConfirm.disabled = false;
+                btnConfirm.className = "w-full neon-btn font-black py-4.5 rounded-2xl text-sm md:text-base cursor-pointer tracking-wide flex items-center justify-center gap-2 shadow-xl";
+                btnConfirm.innerHTML = "동의하고 계정 발급(조회)하기 🚀";
+            } else {
+                btnConfirm.disabled = true;
+                btnConfirm.className = "w-full bg-zinc-900/60 text-zinc-600 font-bold py-4.5 rounded-2xl transition-all cursor-not-allowed border border-zinc-800 text-sm md:text-base";
+            }
+        }
+
+        async function confirmSearch() {
+            const code = document.getElementById('input-code').value.trim();
+            const resultBox = document.getElementById('result-box');
+            const errorBox = document.getElementById('error-box');
+            const btnConfirm = document.getElementById('btn-modal-confirm');
+            
+            resultBox.classList.add('hidden');
+            errorBox.classList.add('hidden');
+            if (otpInterval) clearInterval(otpInterval);
+
+            const originalBtnText = btnConfirm.innerHTML;
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = `<span>⏳</span> 조회 중...`;
+
+            try {
+                const { data, error } = await supabaseClient.from('orders').select('*').eq('search_key', code).single();
+                
+                closeAgreementModal();
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = originalBtnText;
+
+                if (error || !data) { errorBox.classList.remove('hidden'); return; }
+
+                const productType = String(data.product_type || '').toLowerCase();
+                const accountIdStr = String(data.account_id || '').toLowerCase();
+                const isEmailAccount = productType.includes('이메일') || accountIdStr.includes('@') || Boolean(data.email_type);
+
+                if (currentTab === 'general' && isEmailAccount) { errorBox.classList.remove('hidden'); return; }
+                if (currentTab === 'email' && !isEmailAccount) { errorBox.classList.remove('hidden'); return; }
+
+                document.getElementById('res-product-type').innerText = data.product_type || '구매 계정';
+                document.getElementById('res-account-id').innerText = data.account_id || '정보 없음';
+                document.getElementById('res-account-pw').innerText = data.account_pw || '정보 없음';
+
+                if (currentTab === 'email' && data.email_type) {
+                    document.getElementById('email-id-container').classList.remove('hidden');
+                    document.getElementById('email-pw-container').classList.remove('hidden');
+                    const parts = data.email_type.split('/');
+                    document.getElementById('res-email-id').innerText = parts[0] ? parts[0].trim() : data.email_type;
+                    document.getElementById('res-email-pw').innerText = parts[1] ? parts[1].trim() : '정보 없음';
+                } else {
+                    document.getElementById('email-id-container').classList.add('hidden');
+                    document.getElementById('email-pw-container').classList.add('hidden');
+                }
+
+                let otpKey = data.otp_url || data.otp_key || data.otp || data.two_fa || data.otp_secret || data.secret || data.code || '';
+                if (otpKey.includes('otpauth://')) {
+                    try {
+                        const secretParam = new URL(otpKey).searchParams.get('secret');
+                        if (secretParam) otpKey = secretParam;
+                    } catch (e) {}
+                }
+
+                if (otpKey && String(otpKey).trim() !== '') {
+                    setupOtp(String(otpKey).trim());
+                } else {
+                    document.getElementById('res-otp').innerText = '미등록';
+                    document.getElementById('res-otp-timer').innerText = '';
+                }
+
+                document.getElementById('header-section').classList.add('hidden');
+                document.getElementById('step-query').classList.add('hidden');
+                resultBox.classList.remove('hidden');
+
+            } catch (err) {
+                closeAgreementModal();
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = originalBtnText;
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function setupOtp(secret) {
+            try {
+                const totp = new OTPAuth.TOTP({ issuer: "AccountCheck", label: "User", algorithm: "SHA1", digits: 6, period: 30, secret: secret });
+                function updateOtp() {
+                    const token = totp.generate();
+                    const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
+                    document.getElementById('res-otp').innerText = token;
+                    document.getElementById('res-otp-timer').innerText = `⏱️ ${remaining}초 남음`;
+                }
+                updateOtp();
+                otpInterval = setInterval(updateOtp, 1000);
+            } catch (e) {
+                document.getElementById('res-otp').innerText = secret;
+                document.getElementById('res-otp-timer').innerText = '';
+            }
+        }
+
+        function copyText(elementId, btnElement) {
+            const text = document.getElementById(elementId).innerText;
+            if (!text || text === '정보 없음' || text === '미등록' || text === '--- ---') return;
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btnElement.innerText;
+                btnElement.innerText = '✅ 복사완료!';
+                btnElement.className = "bg-zinc-200 text-black text-xs px-4 py-2.5 rounded-xl transition-colors shrink-0 font-bold shadow-md";
+                setTimeout(() => {
+                    btnElement.innerText = orig;
+                    btnElement.className = "bg-zinc-900 hover:bg-zinc-800 text-xs px-4 py-2.5 rounded-xl text-zinc-300 hover:text-white border border-zinc-700 transition-colors shrink-0 font-semibold shadow";
+                }, 1200);
+            });
+        }
+    </script>
 </body>
 </html>
