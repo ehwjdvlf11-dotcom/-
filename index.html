@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🖤 X 계정 구매 및 실시간 조회 시스템 (Mono)</title>
+    <title> X 계정 구매 및 실시간 조회 시스템 (Mono)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS SDK -->
@@ -413,7 +413,7 @@
                 <button onclick="closeAgreementModal()" class="text-zinc-400 hover:text-white text-2xl font-bold p-2">×</button>
             </div>
 
-            <!-- 스크롤 영역 (높이를 190px로 살짝 줄여서 스크롤이 반드시 생기게 조정) -->
+            <!-- 스크롤 영역 -->
             <div id="terms-box" onscroll="checkScrollBottom()" class="border border-zinc-700 bg-black/60 rounded-2xl p-4 text-xs md:text-sm text-zinc-300 space-y-3 max-h-[190px] overflow-y-auto shadow-inner">
                 <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
                     <p class="text-white font-black flex items-center gap-1"><span>🚨</span> 계정 양도 이용 주의사항</p>
@@ -443,7 +443,6 @@
             </div>
 
             <div class="flex items-center gap-3 x-inner-card p-4.5 rounded-2xl shadow">
-                <!-- 기본적으로 disabled(비활성화) 처리 -->
                 <input type="checkbox" id="modal-agree-checkbox" onchange="checkModalAgreement()" disabled class="w-5 h-5 accent-white rounded cursor-not-allowed opacity-50">
                 <label id="modal-label" for="modal-agree-checkbox" class="text-zinc-500 font-bold text-xs md:text-sm cursor-not-allowed select-none">
                     🔒 약관을 맨 아래로 내려주세요!
@@ -566,7 +565,6 @@
             document.getElementById('agreement-modal').classList.remove('hidden');
         }
 
-        // 스크롤이 맨 아래에 확실히 도달했을 때만 체크박스 활성화
         function checkScrollBottom() {
             const termsBox = document.getElementById('terms-box');
             if (termsBox.scrollTop + termsBox.clientHeight >= termsBox.scrollHeight - 2) {
