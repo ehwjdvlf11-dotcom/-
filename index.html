@@ -13,6 +13,12 @@
     h2 { text-align: center; color: #60a5fa; margin-bottom: 8px; font-size: 22px; }
     p.desc { text-align: center; color: #9ca3af; font-size: 13px; margin-bottom: 20px; }
     
+    .price-table { background: #374151; border: 1px solid #4b5563; border-radius: 10px; padding: 15px; margin-bottom: 20px; color: #f3f4f6; font-size: 13px; }
+    .price-table h3 { color: #fbbf24; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+    .price-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #4b5563; }
+    .price-item:last-child { border-bottom: none; }
+    .price-sub { font-size: 11px; color: #9ca3af; display: block; margin-top: 2px; }
+
     .notice-banner { background: #374151; border: 1px solid #4b5563; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
     .notice-header { background: #1f2937; padding: 12px 16px; color: #fbbf24; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .notice-content { padding: 14px; font-size: 12px; color: #d1d5db; line-height: 1.6; display: none; border-top: 1px solid #4b5563; }
@@ -51,6 +57,30 @@
     <h2>🔍 구매 계정 조회</h2>
     <p class="desc">발급 코드를 입력하여 계정 정보를 확인하세요.</p>
 
+    <!-- 가격표 안내 섹션 -->
+    <div class="price-table">
+      <h3>💳 X 계정 양도 가격표 안내</h3>
+      <div class="price-item">
+        <span>🔹 일반 계정</span>
+        <strong>15,000원</strong>
+      </div>
+      <div class="price-item">
+        <div>
+          <span>🔹 이메일 지급 계정</span>
+          <span class="price-sub">✨ (X계정 잠김 및 문제시 해결이 가능한 이메일 지급)</span>
+        </div>
+        <strong>20,000원</strong>
+      </div>
+      <div class="price-item">
+        <span>📦 5개 일괄 구매</span>
+        <strong>70,000원</strong>
+      </div>
+      <div class="price-item">
+        <span>📦 10개 일괄 구매</span>
+        <strong>130,000원</strong>
+      </div>
+    </div>
+
     <div class="notice-banner">
       <div class="notice-header" onclick="toggleNotice()">
         <span>⚠️ [필독] 계정 수령 후 필수 숙지사항 (클릭해서 보기)</span>
@@ -62,6 +92,7 @@
           <li><strong>서치벤 테스트 및 규정:</strong> 최초 테스트 시 노출 불가인 경우 즉시 교환 가능하며 결과를 꼭 통보해 주세요. (미답변 시 정상 노출 간주, 이후 사용자 활동으로 인한 서치벤은 교환/환불 불가)</li>
           <li><strong>계정 활성화 필수 작업:</strong> 신규 계정이므로 수령즉시 팔로우/팔로잉 늘리기, 게시글/리트윗/좋아요 등의 활동을 남겨주세요.</li>
           <li><strong>연동 메일 변경 (미구매자):</strong> 연동된 메일은 보장하지 않으므로 즉시 개인 메일로 변경해 주세요. (48시간 잠금은 트위터 자체 보안 시스템입니다.)</li>
+          <li><strong>양도 후 책임 안내:</strong> 계정 양도 이후 계정 ID, PW, 이메일, 이름 변경 등 책임은 구매자에게 있습니다. 양도자에게 묻지 말고 사용해주세요.</li>
         </ol>
       </div>
     </div>
